@@ -27,7 +27,7 @@ const Navbar = () => {
               <Link to="/" className="flex items-center gap-2.5">
                 <ShipWheelIcon className="size-9 text-primary" />
                 <span className="text-3xl font-bold font-mono bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary  tracking-wider">
-                  Streamify
+                  Fluentify
                 </span>
               </Link>
             </div>
@@ -45,8 +45,15 @@ const Navbar = () => {
           <ThemeSelector />
 
           <div className="avatar">
-            <div className="w-9 rounded-full">
-              <img src={authUser?.profilePic} alt="User Avatar" rel="noreferrer" />
+            <div className="w-9 rounded-full overflow-hidden">
+              <img 
+                src={authUser?.profilePic || "/avatar-placeholder.png"} 
+                alt="User Avatar" 
+                rel="noreferrer" 
+                onError={(e) => {
+                  e.target.src = "/avatar-placeholder.png";
+                }}
+              />
             </div>
           </div>
 

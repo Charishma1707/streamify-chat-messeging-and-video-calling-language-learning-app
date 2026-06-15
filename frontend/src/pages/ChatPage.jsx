@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import useAuthUser from "../hooks/useAuthUser";
 import { useQuery } from "@tanstack/react-query";
-import { getStreamToken } from "../lib/api";
+import { getStreamToken, saveMessageAPI } from "../lib/api";
 
 import {
   Channel,
@@ -19,7 +19,7 @@ import toast from "react-hot-toast";
 import ChatLoader from "../components/ChatLoader";
 import CallButton from "../components/CallButton";
 
-const STREAM_API_KEY = import.meta.env.VITE_STREAM_API_KEY;
+const STREAM_API_KEY = import.meta.env.VITE_STREAM_API_KEY || "6am24gkcr9pa";
 
 const ChatPage = () => {
   const { id: targetUserId } = useParams();
@@ -37,6 +37,8 @@ const ChatPage = () => {
   });
 
   useEffect(() => {
+    let activeListener = null;
+
     const initChat = async () => {
       if (!tokenData?.token || !authUser) return;
 
@@ -45,14 +47,19 @@ const ChatPage = () => {
 
         const client = StreamChat.getInstance(STREAM_API_KEY);
 
-        await client.connectUser(
-          {
-            id: authUser._id,
-            name: authUser.fullName,
-            image: authUser.profilePic,
-          },
-          tokenData.token
-        );
+        if (client.userID !== authUser._id) {
+          if (client.userID) {
+            await client.disconnectUser();
+          }
+          await client.connectUser(
+            {
+              id: authUser._id,
+              name: authUser.fullName,
+              image: authUser.profilePic,
+            },
+            tokenData.token
+          );
+        }
 
         //
         const channelId = [authUser._id, targetUserId].sort().join("-");
@@ -67,6 +74,24 @@ const ChatPage = () => {
 
         await currChannel.watch();
 
+        // Listen for new messages sent by the user to save metadata to Mongo and Qdrant
+        activeListener = currChannel.on("message.new", async (event) => {
+          if (event.message.user.id === authUser._id) {
+            try {
+              await saveMessageAPI({
+                streamMessageId: event.message.id,
+                channelId: currChannel.id,
+                senderId: authUser._id,
+                receiverId: targetUserId,
+                text: event.message.text,
+                timestamp: event.message.created_at,
+              });
+            } catch (err) {
+              console.error("Error saving message via API:", err);
+            }
+          }
+        });
+
         setChatClient(client);
         setChannel(currChannel);
       } catch (error) {
@@ -78,6 +103,12 @@ const ChatPage = () => {
     };
 
     initChat();
+
+    return () => {
+      if (activeListener) {
+        activeListener.unsubscribe();
+      }
+    };
   }, [tokenData, authUser, targetUserId]);
 
   const handleVideoCall = () => {

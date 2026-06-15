@@ -7,6 +7,7 @@ import NotificationsPage from "./pages/NotificationsPage.jsx";
 import CallPage from "./pages/CallPage.jsx";
 import ChatPage from "./pages/ChatPage.jsx";
 import OnboardingPage from "./pages/OnboardingPage.jsx";
+import AICoachPage from "./pages/AICoachPage.jsx";
 
 import { Toaster } from "react-hot-toast";
 
@@ -25,7 +26,7 @@ const App = () => {
   if (isLoading) return <PageLoader />;
 
   return (
-    <div className="h-screen" data-theme={theme}>
+    <div className="min-h-screen" data-theme={theme}>
       <Routes>
         <Route
           path="/"
@@ -38,6 +39,10 @@ const App = () => {
               <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
             )
           }
+        />
+        <Route
+          path="/friends"
+          element={<Navigate to="/" replace />}
         />
         <Route
           path="/signup"
@@ -80,6 +85,19 @@ const App = () => {
             isAuthenticated && isOnboarded ? (
               <Layout showSidebar={false}>
                 <ChatPage />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+
+        <Route
+          path="/ai-coach"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <AICoachPage />
               </Layout>
             ) : (
               <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />

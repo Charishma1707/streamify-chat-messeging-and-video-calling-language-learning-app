@@ -61,6 +61,9 @@ const OnboardingPage = () => {
                     src={formState.profilePic}
                     alt="Profile Preview"
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = "/avatar-placeholder.png";
+                    }}
                   />
                 ) : (
                   <div className="flex items-center justify-center h-full">

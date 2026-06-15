@@ -7,11 +7,15 @@ import path from "path";
 import authRoutes from "./routes/auth.route.js";
 import userRoutes from "./routes/user.route.js";
 import chatRoutes from "./routes/chat.route.js";
+import aiRoutes from "./routes/ai.route.js";
 
 import { connectdb } from "./lib/db.js";
+import { initQdrant } from "./lib/qdrant.js";
+import { startChangeStream, backfillMessages } from "./lib/ingest.js";
+import { syncAllUsersToStream } from "./lib/stream.js";
 
 const app = express();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 5001;
 
 const __dirname = path.resolve();
 
@@ -28,6 +32,7 @@ app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/ai", aiRoutes);
 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));
@@ -37,7 +42,15 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Server is running on port ${PORT}`);
-  connectdb();
-});
+  await connectdb();
+  
+  // Sync all users to Stream Chat
+  await syncAllUsersToStream();
+  
+  // RAG Startup Routines
+  await initQdrant();
+  startChangeStream();
+  await backfillMessages();
+}); 

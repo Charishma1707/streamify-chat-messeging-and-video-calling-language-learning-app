@@ -64,3 +64,13 @@ export async function getStreamToken() {
   const response = await axiosInstance.get("/chat/token");
   return response.data;
 }
+
+export async function queryAICoach(question) {
+  const response = await axiosInstance.post("/ai/coach", { question });
+  return response.data;
+}
+
+export async function saveMessageAPI(messageData) {
+  const response = await axiosInstance.post("/chat/message", messageData);
+  return response.data;
+}
