@@ -2,7 +2,13 @@ import { QdrantClient } from "@qdrant/js-client-rest";
 import "dotenv/config";
 
 const QDRANT_URL = process.env.QDRANT_URL || "http://localhost:6333";
-export const qdrantClient = new QdrantClient({ url: QDRANT_URL, checkCompatibility: false });
+const QDRANT_API_KEY = process.env.QDRANT_API_KEY;
+
+export const qdrantClient = new QdrantClient({
+  url: QDRANT_URL,
+  apiKey: QDRANT_API_KEY || undefined,
+  checkCompatibility: false,
+});
 
 const COLLECTION_NAME = "messages";
 
