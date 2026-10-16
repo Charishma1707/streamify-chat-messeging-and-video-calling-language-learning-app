@@ -53,25 +53,37 @@ USER QUESTION:
 Please answer the user's question grounded in the chat messages listed in the context. If the question asks about something not present in the context, helpfully explain what you do see, or provide general language learning advice. Remember to cite the messages as [1], [2] etc. where appropriate.
 `;
 
-  try {
-    const chatCompletion = await groq.chat.completions.create({
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
-      ],
-      model: "llama-3.3-70b-versatile",
-      temperature: 0.3,
-      max_completion_tokens: 1024,
-    });
+  const candidateModels = [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "llama-3.3-70b-versatile",
+    "llama-3.1-70b-versatile",
+    "llama3-70b-8192",
+  ];
 
-    const responseText = chatCompletion.choices[0]?.message?.content;
-    if (!responseText) {
-      throw new Error("Empty response received from Groq.");
+  let lastError = null;
+  for (const modelName of candidateModels) {
+    try {
+      const chatCompletion = await groq.chat.completions.create({
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        model: modelName,
+        temperature: 0.3,
+        max_completion_tokens: 1024,
+      });
+
+      const responseText = chatCompletion.choices[0]?.message?.content;
+      if (responseText) {
+        return responseText;
+      }
+    } catch (error) {
+      lastError = error;
+      console.warn(`Groq model ${modelName} failed (${error.message}), trying next fallback...`);
     }
-
-    return responseText;
-  } catch (error) {
-    console.error("Groq API call failed:", error.message);
-    throw new Error("Failed to generate response from Groq AI Coach");
   }
+
+  console.error("All Groq models failed:", lastError?.message);
+  throw new Error("Failed to generate response from Groq AI Coach");
 }
