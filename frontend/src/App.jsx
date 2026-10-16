@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router";
 
 import HomePage from "./pages/HomePage.jsx";
+import FriendsPage from "./pages/FriendsPage.jsx";
 import SignUpPage from "./pages/SignUpPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import NotificationsPage from "./pages/NotificationsPage.jsx";
@@ -15,10 +16,17 @@ import PageLoader from "./components/PageLoader.jsx";
 import useAuthUser from "./hooks/useAuthUser.js";
 import Layout from "./components/Layout.jsx";
 import { useThemeStore } from "./store/useThemeStore.js";
+import { useEffect } from "react";
 
 const App = () => {
   const { isLoading, authUser } = useAuthUser();
   const { theme } = useThemeStore();
+
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.documentElement.setAttribute("data-theme", theme);
+    }
+  }, [theme]);
 
   const isAuthenticated = Boolean(authUser);
   const isOnboarded = authUser?.isOnboarded;
@@ -26,7 +34,7 @@ const App = () => {
   if (isLoading) return <PageLoader />;
 
   return (
-    <div className="min-h-screen" data-theme={theme}>
+    <div className="min-h-screen bg-base-100 text-base-content" data-theme={theme}>
       <Routes>
         <Route
           path="/"
@@ -42,7 +50,19 @@ const App = () => {
         />
         <Route
           path="/friends"
-          element={<Navigate to="/" replace />}
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <FriendsPage />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+        <Route
+          path="/friend"
+          element={<Navigate to="/friends" replace />}
         />
         <Route
           path="/signup"
@@ -118,6 +138,11 @@ const App = () => {
               <Navigate to="/login" />
             )
           }
+        />
+
+        <Route
+          path="*"
+          element={<Navigate to="/" replace />}
         />
       </Routes>
 

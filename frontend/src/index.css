@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html, body {
+    min-height: 100%;
+    background-color: hsl(var(--b1));
+    color: hsl(var(--bc));
+  }
+}
+
 .str-chat__channel {
   display: flex;
   align-items: center;
